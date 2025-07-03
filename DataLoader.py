@@ -7,6 +7,56 @@ from implicit.nearest_neighbours import bm25_weight
 import implicit
 
 
+def create_y_target(
+    val_df: pd.DataFrame,
+    key_x: str = 'patient_id',
+    key_y: str = '식품군분류',
+):
+
+    val_df = val_df.groupby(
+        [key_x, key_y],
+        observed=False,
+    ).size().unstack(fill_value=0)
+
+    recommendations = {}
+    for idx, value in enumerate(val_df.index):
+        sorted_recommend = val_df.iloc[idx].sort_values().index.tolist()[::-1]
+        recommendations[value] = sorted_recommend
+
+    return recommendations
+
+
+def split_train_val(
+    df: pd.DataFrame,
+    val_ids: np.ndarray
+):
+
+    # 선택된 환자들을 valid set, 나머지를 train set로 할당
+    val_df = df[df['patient_id'].isin(val_ids)].copy()
+    train_df = df[~df['patient_id'].isin(val_ids)].copy()
+
+    return train_df, val_df
+
+# EVERY COLUMN NAMES
+# patient_id, meal_time, meal_type, carbs, protein, fat, fiber
+# delta_g, g_max, GL, CHO_ratio, Protein_ratio, Fat_ratio
+# 식품군분류, good_meal_label, meal_score
+# Select features for cos similarity calculation among patients
+def select_similar_features(
+    df: pd.DataFrame,
+    keys: list,
+):
+
+    new_df = df[['patient_id'] + keys].copy()
+
+    # One hot all categorical columns
+    categorical_cols = new_df.select_dtypes(include=['object', 'category']).columns
+    new_df = pd.get_dummies(new_df, columns=categorical_cols, dtype=float)
+    new_df = new_df.groupby('patient_id', observed=False).mean()
+
+    return new_df
+
+
 def binning(
     df: pd.DataFrame,
     keys: List[str],
@@ -41,7 +91,7 @@ def load_data(
 
 if __name__ == "__main__":
 
-    total_df = load_data("./dataset/total_metrics.csv")
+    total_df = load_data("./dataset/evaluated_meals")
 
     keys = ['carbs', 'protein', 'fat']
     df = binning(total_df, keys)
@@ -61,20 +111,23 @@ if __name__ == "__main__":
 
     # ========================================
 
-    patient_carb_mat = train_df.groupby(
-        ['patient_id', 'carbs_consumption']
+    patient_meal_mat = train_df.groupby(
+        ['patient_id', 'carb_consumption'],
+        observed=False,
     ).size().unstack(fill_value=0)
-    patient_carb_mat = bm25_weight(
+    patient_meal_mat = bm25_weight(
         patient_carb_mat,
         K1=1.5,
         B=0.75,
     )
     patient_carb_mat = pd.DataFrame.sparse.from_spmatrix(patient_carb_mat)
     patient_carb_mat.index = train_df.groupby(
-        ['patient_id', 'carbs_consumption']
+        ['patient_id', 'carbs_consumption'],
+        observed=False,
     ).size().unstack(fill_value=0).index
     patient_carb_mat.columns= train_df.groupby(
-        ['patient_id', 'carbs_consumption']
+        ['patient_id', 'carbs_consumption'],
+        observed=False,
     ).size().unstack(fill_value=0).columns
 
     # FIX: Use other features to calculate similarity among patients
