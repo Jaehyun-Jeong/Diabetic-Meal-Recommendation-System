@@ -44,14 +44,7 @@ user_predicted_scores = user_similarity.dot(
 recommendations = []
 for idx, user in enumerate(user_article_matrix.index):
     sorted_indicies = user_predicted_scores[idx].argsort()[::-1]
-
-    print(sorted_indicies)
-    print(user_predicted_scores[idx][385:395])
-    raise ValueError("test")
-
     sorted_recommend = [article for article in user_article_matrix.columns[sorted_indicies]]
-
-    print(sorted_recommend)
 
     for article in sorted_recommend:
         recommendations.append([user, article])

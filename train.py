@@ -5,6 +5,7 @@ from scipy.spatial.distance import pdist, squareform
 import scipy
 from implicit.nearest_neighbours import bm25_weight
 import implicit
+from tqdm import tqdm
 
 from DataLoader import load_data, select_similar_features, split_train_val, create_y_target
 from model import BM25CosSim
@@ -47,15 +48,23 @@ patient_val_df = select_similar_features(
     keys=keys,
 )
 
+# Normalize
+mean = patient_train_df.mean()
+std = patient_train_df.std()
+patient_train_df = (patient_train_df - mean) / std
+patient_val_df = (patient_val_df - mean) / std
+
 params = {
-    'K1': np.arange(0, 3, 0.01),
-    'B': np.arange(0, 1, 0.01),
+    'K1': np.arange(3.02, 4, 0.001),
+    'B': np.arange(0, 3, 0.001),
 }
 
-# Grid Search
+
 best_param = None
 best_score = 0
-for combo in product(*params.values()):
+
+total_length = len(params['K1']) * len(params['B'])
+for combo in tqdm(product(*params.values()), desc='Grid Search', total=total_length):
     model = BM25CosSim(K1=combo[0], B=combo[1])
 
     model.fit(
@@ -71,5 +80,4 @@ for combo in product(*params.values()):
     if score > best_score:
         best_param = combo
         best_score = score
-        print(f"Best score has updated to {score}")
-
+        tqdm.write(f"Best score has updated to {score} at K1={combo[0]}, B={combo[1]}")

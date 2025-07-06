@@ -1,10 +1,62 @@
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import pdist, squareform
 import scipy
-from implicit.nearest_neighbours import bm25_weight
+from scipy.spatial.distance import pdist, squareform
 import implicit
+from implicit.nearest_neighbours import bm25_weight
+from implicit.lmf import LogisticMatrixFactorization
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.base import BaseEstimator
+
+
+
+class LMF(BaseEstimator):
+
+    def __init__(
+        self,
+        factors=20,
+        learning_rate=1.0,
+        regularization=1.0,
+        iterations=50,
+        neg_prop=30
+    ):
+
+        self.factors = factors
+        self.learning_rate = learning_rate
+        self.regularization = regularization
+        self.iterations = iterations
+        self.neg_prop = neg_prop
+        self.model = None
+
+    def fit(self, X, y=None):
+        self.model = LogisticMatrixFactorization(
+            factors=self.factors,
+            learning_rate=self.learning_rate,
+            regularization=self.regularization,
+            iterations=self.iterations,
+            neg_prop=self.neg_prop
+        )
+        self.model.fit(X)  # transpose: shape [items, users]
+        return self
+
+    def predict(self, X):
+        return self.model.user_factors @ self.model.item_factors.T
+
+# Recall@k 정의
+def recall_at_k(model, X, k=3):
+    recalls = []
+    for user in range(X.shape[0]):
+        true_items = X[user].indices
+        if len(true_items) == 0:
+            continue
+        scores = model.model.user_factors[user] @ model.model.item_factors.T
+        top_k_items = np.argpartition(-scores, k)[:k]
+        hits = np.intersect1d(top_k_items, true_items, assume_unique=True)
+        recalls.append(len(hits) / len(true_items))
+    return np.mean(recalls)
+
+def recall_scorer(estimator, X_val):
+    return recall_at_k(estimator, X_val, k=3)
 
 
 class BM25CosSim():
@@ -20,9 +72,11 @@ class BM25CosSim():
 
         self.bm25_weight = None
         self.base_df = None
+        self.K1 = K1
+        self.B = B
 
-    @staticmethod 
     def __bm25_weight(
+        self,
         train_df: pd.DataFrame,
         key_x: str = 'patient_id',
         key_y: str = '식품군분류',
@@ -34,8 +88,8 @@ class BM25CosSim():
         ).size().unstack(fill_value=0)
         mat = bm25_weight(
             mat,
-            K1=1.5,
-            B=0.75,
+            K1=self.K1,
+            B=self.B,
         )
         mat = pd.DataFrame.sparse.from_spmatrix(mat)
         mat.index = train_df.groupby(
@@ -66,7 +120,6 @@ class BM25CosSim():
     ):
 
         similarity = cosine_similarity(self.base_df, y)
-
         score_pred = similarity.T.dot(
             (self.bm25_weight) / np.array([np.abs(similarity).sum(axis=1)]).T
         )
@@ -87,7 +140,7 @@ class BM25CosSim():
     def recallK(
         y_pred: dict,
         y: dict,
-        K: int = 3, 
+        K: int = 3,
     ):
 
         def count_common_elements(list1, list2):
