@@ -11,12 +11,14 @@ from DataLoader import load_data, select_similar_features, split_train_val, crea
 from model import BM25CosSim
 
 np.random.seed(42)
-
-patient_df = load_data("./dataset/total_metrics.csv")  # patient information for similarity
+BM25_BEST = {
+    'K1': 3.02,
+    'B': 1.99,
+}
 
 FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
 GOOD_MEAL_SCORE = 50.0
-df = load_data("./dataset/evaluated_meals.csv")
+df = load_data()
 df = df.loc[df['meal_score'] >= GOOD_MEAL_SCORE]
 
 size_val = 10  # use 10 patients to validate
@@ -25,10 +27,6 @@ val_ids = np.random.choice(patient_ids, size=size_val, replace=False)
 train_df, val_df = split_train_val(
     df=df,
     val_ids=val_ids,
-)
-patient_train_df, patient_val_df = split_train_val(
-    df=patient_df,
-    val_ids=val_ids
 )
 train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], categories=FOOD_CATEGORIES)
 
@@ -39,12 +37,12 @@ train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], catego
 # Age, Gender, BMI, Body weight, Height 
 keys=['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
 patient_train_df = select_similar_features(
-    patient_train_df,
+    train_df,
     keys=keys,
 )
 recommend_target = create_y_target(val_df)
 patient_val_df = select_similar_features(
-    patient_val_df,
+    val_df,
     keys=keys,
 )
 
@@ -54,7 +52,7 @@ std = patient_train_df.std()
 patient_train_df = (patient_train_df - mean) / std
 patient_val_df = (patient_val_df - mean) / std
 
-model = BM25CosSim(K1=combo[0], B=combo[1])
+model = BM25CosSim(K1=BM25_BEST['K1'], B=BM25_BEST['B'])
 
 model.fit(
     train_df=train_df,
@@ -66,7 +64,4 @@ model.fit(
 recommend_pred = model.predict(patient_val_df)
 score = BM25CosSim.recallK(recommend_pred, recommend_target)
 
-if score > best_score:
-    best_param = combo
-    best_score = score
-    tqdm.write(f"Best score has updated to {score} at K1={combo[0]}, B={combo[1]}")
+print(score)

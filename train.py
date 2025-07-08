@@ -12,11 +12,9 @@ from model import BM25CosSim
 
 np.random.seed(42)
 
-patient_df = load_data("./dataset/total_metrics.csv")  # patient information for similarity
-
 FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
 GOOD_MEAL_SCORE = 50.0
-df = load_data("./dataset/evaluated_meals.csv")
+df = load_data()
 df = df.loc[df['meal_score'] >= GOOD_MEAL_SCORE]
 
 size_val = 10  # use 10 patients to validate
@@ -27,7 +25,7 @@ train_df, val_df = split_train_val(
     val_ids=val_ids,
 )
 patient_train_df, patient_val_df = split_train_val(
-    df=patient_df,
+    df=df,
     val_ids=val_ids
 )
 train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], categories=FOOD_CATEGORIES)
@@ -37,11 +35,7 @@ train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], catego
 # delta_g, g_max, gl, cho_ratio, protein_ratio, fat_ratio
 # 식품군분류, good_meal_label, meal_score
 # Age, Gender, BMI, Body weight, Height 
-keys=['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
-patient_train_df = select_similar_features(
-    patient_train_df,
-    keys=keys,
-)
+sim_keys=['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
 recommend_target = create_y_target(val_df)
 patient_val_df = select_similar_features(
     patient_val_df,
@@ -65,7 +59,12 @@ best_score = 0
 
 total_length = len(params['K1']) * len(params['B'])
 for combo in tqdm(product(*params.values()), desc='Grid Search', total=total_length):
-    model = BM25CosSim(K1=combo[0], B=combo[1])
+    model = BM25CosSim(
+        K1=combo[0], B=combo[1],
+        sim_keys=sim_keys,
+        key_x='patient_id',
+        key_y='식품군분류',
+    )
 
     model.fit(
         train_df=train_df,

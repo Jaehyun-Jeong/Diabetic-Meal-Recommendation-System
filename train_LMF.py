@@ -15,11 +15,9 @@ from model import BM25CosSim, LMF, recall_scorer
 
 np.random.seed(42)
 
-patient_df = load_data("./dataset/total_metrics.csv")  # patient information for similarity
-
 FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
 GOOD_MEAL_SCORE = 50.0
-df = load_data("./dataset/evaluated_meals.csv")
+df = load_data()
 df = df.loc[df['meal_score'] >= GOOD_MEAL_SCORE]
 
 size_val = 0  # use 10 patients to validate
@@ -28,10 +26,6 @@ val_ids = np.random.choice(patient_ids, size=size_val, replace=False)
 train_df, _ = split_train_val(
     df=df,
     val_ids=val_ids,
-)
-patient_train_df, _ = split_train_val(
-    df=patient_df,
-    val_ids=val_ids
 )
 train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], categories=FOOD_CATEGORIES)
 
@@ -42,7 +36,7 @@ train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], catego
 # Age, Gender, BMI, Body weight, Height 
 keys=['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
 patient_train_df = select_similar_features(
-    patient_train_df,
+    train_df,
     keys=keys,
 )
 
@@ -60,7 +54,7 @@ BM25_model.fit(
 )
 
 # Logistic Matrix Factorizaiton
-xui_csr = csr_matrix(BM25_model.bm25_weight)  # user-item to item-user
+xui_csr = csr_matrix(BM25_model.bm25_weight)
 
 # Random Search
 dists = {
