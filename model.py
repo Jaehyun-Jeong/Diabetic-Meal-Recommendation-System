@@ -73,7 +73,6 @@ def recall_at_k(model, X, k=3):
         scores = model.model.user_factors[user] @ model.model.item_factors.T
         top_k_items = np.argpartition(-scores, k)[:k]
 
-
         hits = np.intersect1d(top_k_items, true_items, assume_unique=True)
         recalls.append(len(hits) / len(true_items))
     return np.mean(recalls)
