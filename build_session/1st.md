@@ -5,6 +5,8 @@
     * BtoB
     * BtoC
     * ROI
+    * 니치고객
+    * How to talk to anyone 92~ 책 추천
 
 ## 한국 스타트업의 어려움
 
