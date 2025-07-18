@@ -35,12 +35,18 @@ train_df['식품군분류'] = pd.Categorical(train_df['식품군분류'], catego
 # delta_g, g_max, gl, cho_ratio, protein_ratio, fat_ratio
 # 식품군분류, good_meal_label, meal_score
 # Age, Gender, BMI, Body weight, Height 
-sim_keys=['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
-recommend_target = create_y_target(val_df)
+sim_keys = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
+patient_train_df = select_similar_features(
+    patient_train_df,
+    keys=sim_keys,
+)
 patient_val_df = select_similar_features(
     patient_val_df,
-    keys=keys,
+    keys=sim_keys,
 )
+recommend_target = create_y_target(val_df)
+
+sim_features = patient_train_df.columns
 
 # Normalize
 mean = patient_train_df.mean()
@@ -61,17 +67,12 @@ total_length = len(params['K1']) * len(params['B'])
 for combo in tqdm(product(*params.values()), desc='Grid Search', total=total_length):
     model = BM25CosSim(
         K1=combo[0], B=combo[1],
-        sim_keys=sim_keys,
+        sim_features=sim_features,
         key_x='patient_id',
         key_y='식품군분류',
     )
 
-    model.fit(
-        train_df=train_df,
-        key_x='patient_id',
-        key_y='식품군분류',
-        sim_df=patient_train_df,
-    )
+    model.fit(train_df)
 
     recommend_pred = model.predict(patient_val_df)
     score = BM25CosSim.recallK(recommend_pred, recommend_target)

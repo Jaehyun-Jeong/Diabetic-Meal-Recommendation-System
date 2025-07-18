@@ -90,7 +90,7 @@ class BM25CosSim():
         self,
         K1: float = 3.95,
         B: float = 0.2,
-        sim_keys: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
+        sim_features: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
         key_x: str = 'patient_id',
         key_y: str = '식품군분류',
         normalize: bool = True,
@@ -100,7 +100,7 @@ class BM25CosSim():
         self.base_df = None
         self.K1 = K1
         self.B = B
-        self.sim_keys = sim_keys
+        self.sim_features= sim_features
         self.key_x = key_x
         self.key_y = key_y
         self.normalize = normalize
@@ -137,10 +137,10 @@ class BM25CosSim():
         y=None
     ):
 
-        self.bm25_weight = self.__bm25_weight(train_df, self.key_x, self.key_y)
+        self.bm25_weight = self.__bm25_weight(train_df)
         self.base_df = select_similar_features(
             train_df,
-            keys=self.sim_keys,
+            keys=self.sim_features,
         )
 
         if self.normalize:
@@ -152,7 +152,7 @@ class BM25CosSim():
     ):
 
         # Preprocess X
-        X = X[self.sim_keys]
+        X = X[self.sim_features]
         if self.normalize:
             X = self.normalize_df(self.base_df, X)
 
@@ -212,7 +212,7 @@ class BM25CosSimLMF(BaseEstimator):
         self,
         K1: float = 3.95,
         B: float = 0.2,
-        sim_keys: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
+        sim_features: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
         key_x: str = 'patient_id',
         key_y: str = '식품군분류',
         normalize: bool = True,
@@ -234,7 +234,7 @@ class BM25CosSimLMF(BaseEstimator):
         self.model_BM25CosSim = BM25CosSim(
             K1=K1,
             B=B,
-            sim_keys=sim_keys,
+            sim_features=sim_features,
             key_x=key_x,
             key_y=key_y,
         )
