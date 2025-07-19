@@ -138,6 +138,7 @@ class BM25CosSim():
     ):
 
         self.bm25_weight = self.__bm25_weight(train_df)
+
         self.base_df = select_similar_features(
             train_df,
             keys=self.sim_features,
@@ -152,7 +153,6 @@ class BM25CosSim():
     ):
 
         # Preprocess X
-        X = X[self.sim_features]
         if self.normalize:
             X = self.normalize_df(self.base_df, X)
 
@@ -166,9 +166,7 @@ class BM25CosSim():
         recommendations = {}
         for idx, value in enumerate(X.index):
             sorted_recommendations = score_pred[idx].argsort()[::-1]
-            recommendations[value] = sorted_recommend
-
-        recommendations = pd.DataFrame(recommendations, columns=['patient_id', 'food_id'])
+            recommendations[value] = sorted_recommendations
 
         return recommendations
 
@@ -185,8 +183,9 @@ class BM25CosSim():
 
         return converted_df
 
+
     @staticmethod
-    def recallK(
+    def recall_at_K(
         y_pred: dict,
         y: dict,
         K: int = 3,

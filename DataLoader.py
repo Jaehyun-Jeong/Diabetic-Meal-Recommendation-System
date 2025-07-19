@@ -47,8 +47,6 @@ def select_similar_features(
     keys: list,
 ):
 
-    print(keys)
-
     new_df = df[['patient_id'] + keys].copy()
 
     # One hot all categorical columns
