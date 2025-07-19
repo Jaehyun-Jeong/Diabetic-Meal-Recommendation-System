@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Dict
+import joblib
 import numpy as np
 import pandas as pd
 import scipy
@@ -11,6 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.base import BaseEstimator
 
 from DataLoader import select_similar_features
+from preprocess import Normalizer, idx_to_category
 
 
 FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
@@ -199,7 +201,6 @@ class BM25CosSim():
         for key, value in y.items():
             pred = y_pred[key][:K]
             gt = y[key][:K]
-
             correct_size = correct_size + count_common_elements(pred, gt)
 
         return correct_size / pred_size
@@ -257,3 +258,32 @@ class BM25CosSimLMF(BaseEstimator):
     ):
 
         self.model_BM25CosSim.predict(X)
+
+
+def save_model_normalizer(path: str, model, normalizer):
+    with open(path, 'wb') as file:
+        joblib.dump(
+            {'model': model, 'normalizer': normalizer},
+            file
+        )
+
+
+def load_model_normalizer(path: str):
+    with open(path, 'rb') as file:
+        data = joblib.load(file)
+    model = data['model']
+    normalizer = data['normalizer']
+    return model, normalizer
+
+
+def predict_dict(
+    user_dict: Dict[str, int],
+    model,
+    normalizer,
+):
+    user_df = pd.DataFrame(user_dict, index=[0])
+    user_df = user_df.set_index('patient_id')
+    user_df = normalizer.transform(user_df)
+    recommend = model.predict(user_df)
+    recommend = idx_to_category(recommend)
+    return recommend

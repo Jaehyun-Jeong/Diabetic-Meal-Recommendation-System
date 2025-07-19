@@ -1,4 +1,5 @@
 from itertools import product
+import joblib
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
@@ -8,7 +9,7 @@ import implicit
 from tqdm import tqdm
 
 from DataLoader import load_data, select_similar_features, split_train_val, create_y_target
-from model import BM25CosSim
+from model import BM25CosSim, Normalizer
 
 np.random.seed(42)
 BM25_BEST = {
@@ -60,8 +61,7 @@ model.fit(
     key_y='식품군분류',
     sim_df=patient_train_df,
 )
-
 recommend_pred = model.predict(patient_val_df)
-score = BM25CosSim.recallK(recommend_pred, recommend_target)
+score = BM25CosSim.recall_at_K(recommend_pred, recommend_target)
 
 print(score)
