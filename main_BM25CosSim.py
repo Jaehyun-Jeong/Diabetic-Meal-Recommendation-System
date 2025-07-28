@@ -13,11 +13,14 @@ BM25_BEST = {'K1': 3.02, 'B': 1.99}
 SIM_KEYS = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height ']
 VAL_SIZE = 10
 
-def load_and_prepare_data():
+def load_and_prepare_data(
+    val_size: int = VAL_SIZE,
+):
+
     df = load_data()
     df = df.loc[df['meal_score'] >= GOOD_MEAL_SCORE]
     patient_ids = df['patient_id'].unique()
-    val_ids = np.random.choice(patient_ids, size=VAL_SIZE, replace=False)
+    val_ids = np.random.choice(patient_ids, size=val_size, replace=False)
 
     train_df, val_df = split_train_val(df=df, val_ids=val_ids)
     patient_train_df = select_similar_features(train_df, keys=SIM_KEYS)
