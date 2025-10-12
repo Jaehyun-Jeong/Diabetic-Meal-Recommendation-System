@@ -276,6 +276,21 @@ def load_model_normalizer(path: str):
     return model, normalizer
 
 
+def save_model(path: str, model):
+    with open(path, 'wb') as file:
+        joblib.dump(
+            model,
+            file
+        )
+
+
+def load_model(path: str):
+    with open(path, 'rb') as file:
+        data = joblib.load(file)
+    model = data
+    return model
+
+
 def predict_dict(
     user_dict: Dict[str, int],
     model,

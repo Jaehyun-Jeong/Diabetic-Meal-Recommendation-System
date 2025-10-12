@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Lasso
@@ -12,35 +11,30 @@ from sklearn.pipeline import make_pipeline
 
 from model import save_model
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--xpath", type=str)
-parser.add_argument("--ypath", type=str)
-args = parser.parse_args()
+def load_data():
 
-def load_data(x_path, y_path):
-
-    x_train = pd.read_csv(x_path).to_numpy()
-    y_train = pd.read_csv(y_path).to_numpy().ravel()
+    x_train = pd.read_csv("./dataset/x.clean.pruned.v2.csv").to_numpy()
+    y_train = pd.read_csv("./dataset/g_max.clean.pruned.v2.csv").to_numpy().ravel()
 
     return x_train, y_train
 
-x_train, y_train = load_data(args.xpath, args.ypath)
+x_train, y_train = load_data()
 
 best_params = {'colsample_bytree': 0.7, 'gamma': 0, 'learning_rate': 0.01, 'max_depth': 10, 'min_child_weight': 1, 'n_estimators': 200, 'reg_alpha': 0.1, 'reg_lambda': 2.0, 'subsample': 0.8}
 
 model = XGBRegressor(**best_params)
-'''
 model.fit(x_train, y_train)
 save_model(
     model=model,
-    path="./saved_models/XGB_delta_g.pkl",
+    path="./saved_models/XGB_g_max.pkl",
 )
-'''
 
+'''
 # K-fold cross validation
 kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-scores = cross_val_score(model, x_train, y_train, cv=kf, scoring='neg_mean_absolute_error')  # R^2 score
+scores = cross_val_score(model, x_train, y_train, cv=kf, scoring='neg_mean_absolute_error', verbose=2)
 
 print("개별 Fold 성능:", scores)
 print("평균 성능 (MAE):", np.mean(scores))
+'''
