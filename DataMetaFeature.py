@@ -70,7 +70,9 @@ def add_time_info_data():
     features = [
         'carbs', 'calories', 'protein', 'fat', 'g0',
         'Age', 'Gender', 'BMI', 'Body weight ', 'Height ',
-        'has_diabetes', 'sin_meal_hour', 'cos_meal_hour'
+        'has_diabetes', 'sin_meal_hour', 'cos_meal_hour',
+        'sin_meal_day', 'cos_meal_day',
+        'sin_meal_month', 'cos_meal_month',
     ]
 
     '''
@@ -88,8 +90,8 @@ def add_time_info_data():
     categorical_cols = x_train.select_dtypes(include=['object', 'category']).columns
     x_train = pd.get_dummies(x_train, columns=categorical_cols, dtype=float)
 
-    x_train.to_csv('./dataset/x.clean.pruned.hour.csv', index=False)
-    y_train.to_csv('./dataset/delta_g.clean.pruned.hour.csv', index=False)
+    x_train.to_csv('./dataset/x.clean.pruned.hour.day.month.csv', index=False)
+    y_train.to_csv('./dataset/delta_g.clean.pruned.hour.day.month.csv', index=False)
 
     return df
 
