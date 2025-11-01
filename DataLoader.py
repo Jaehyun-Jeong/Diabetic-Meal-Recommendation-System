@@ -7,6 +7,7 @@ from implicit.nearest_neighbours import bm25_weight
 import implicit
 
 
+# 각 환자의 추천 식품군을 뽑아주는 함수
 def create_y_target(
     val_df: pd.DataFrame,
     key_x: str = 'patient_id',
@@ -26,6 +27,7 @@ def create_y_target(
     return recommendations
 
 
+# 실제 성능 확인을 위해 train, valudation 데이터를 나누는 함수
 def split_train_val(
     df: pd.DataFrame,
     val_ids: np.ndarray
@@ -42,6 +44,7 @@ def split_train_val(
 # delta_g, g_max, GL, CHO_ratio, Protein_ratio, Fat_ratio
 # 식품군분류, good_meal_label, meal_score
 # Select features for cos similarity calculation among patients
+# Cos similarity 계산을 위해 유저 데이터의 컬럼을 선정
 def select_similar_features(
     df: pd.DataFrame,
     keys: list,
@@ -57,6 +60,8 @@ def select_similar_features(
     return new_df
 
 
+# 각각 영양소에 대해 추천을 진행할 경우
+# 연속값을 사분위수 기준으로 이산화 하는 함수
 def binning(
     df: pd.DataFrame,
     keys: List[str],
@@ -82,6 +87,7 @@ def binning(
     return df
 
 
+# 전체 데이터를 concat하여 가져오는 함수
 def load_data():
 
     meal_df = pd.read_csv("./dataset/evaluated_meals.csv")

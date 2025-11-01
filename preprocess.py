@@ -4,6 +4,7 @@ from typing import Dict, List
 FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
 
 
+# mean, std로 normalize
 class Normalizer:
     def __init__(self):
         self.mean = None

@@ -19,7 +19,7 @@ FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '�
 
 # Random Search Result
 # {'regularization': 100.0, 'neg_prop': 100, 'learning_rate': 0.001, 'iterations': 250, 'factors': 50}
-class LMF(BaseEstimator):
+class LMF(BaseEstimator):  # Logistic Matrix Factorization
 
     def __init__(
         self,
@@ -83,6 +83,7 @@ def recall_scorer(estimator, X_val):
     return recall_at_k(estimator, X_val, k=3)
 
 
+# BM25와 cos similarity를 합친 클래스
 class BM25CosSim():
 
     # B: [0, 1]. increase around 0.1, optimal [0.3, 0.9]
@@ -206,6 +207,7 @@ class BM25CosSim():
         return correct_size / pred_size
 
 
+# LMF와 cos similarity를 합친 클래스
 class BM25CosSimLMF(BaseEstimator):
 
     def __init__(
@@ -259,7 +261,7 @@ class BM25CosSimLMF(BaseEstimator):
 
         self.model_BM25CosSim.predict(X)
 
-
+# 모델, normalizer를 저장
 def save_model_normalizer(path: str, model, normalizer):
     with open(path, 'wb') as file:
         joblib.dump(
@@ -268,6 +270,7 @@ def save_model_normalizer(path: str, model, normalizer):
         )
 
 
+# 모델, normalizer를 로드
 def load_model_normalizer(path: str):
     with open(path, 'rb') as file:
         data = joblib.load(file)
@@ -276,6 +279,7 @@ def load_model_normalizer(path: str):
     return model, normalizer
 
 
+# 모델을 저장
 def save_model(path: str, model):
     with open(path, 'wb') as file:
         joblib.dump(
@@ -284,21 +288,9 @@ def save_model(path: str, model):
         )
 
 
+# 모델을 로드
 def load_model(path: str):
     with open(path, 'rb') as file:
         data = joblib.load(file)
     model = data
     return model
-
-
-def predict_dict(
-    user_dict: Dict[str, int],
-    model,
-    normalizer,
-):
-    user_df = pd.DataFrame(user_dict, index=[0])
-    user_df = user_df.set_index('patient_id')
-    user_df = normalizer.transform(user_df)
-    recommend = model.predict(user_df)
-    recommend = idx_to_category(recommend)
-    return recommend
