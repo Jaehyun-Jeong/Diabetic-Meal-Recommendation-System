@@ -93,6 +93,8 @@ cd Diabetic-Meal-Recommendation-System
 pip install pandas numpy scipy scikit-learn implicit tqdm joblib catboost xgboost
 ```
 
+**Note**: The `dataset/` folder is not included in this repository due to privacy considerations. You will need to provide your own data following the schema described below.
+
 ## Usage
 
 ### Basic Recommendation
