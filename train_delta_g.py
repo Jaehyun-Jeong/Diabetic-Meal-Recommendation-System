@@ -10,10 +10,21 @@ from sklearn.model_selection import cross_val_score, KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 
+
 def load_data(
     features: list = [
-        'carbs', 'calories', 'protein', 'fat', 'g0', 'Age', 'BMI',
-        'Body weight ', 'Height ', 'has_diabetes', 'Gender_F', 'Gender_M'
+        "carbs",
+        "calories",
+        "protein",
+        "fat",
+        "g0",
+        "Age",
+        "BMI",
+        "Body weight ",
+        "Height ",
+        "has_diabetes",
+        "Gender_F",
+        "Gender_M",
     ]
 ):
 
@@ -22,26 +33,37 @@ def load_data(
 
     return x_train, y_train
 
+
 param_grid = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [3, 5, 7, 9],
-    'learning_rate': [0.01, 0.05, 0.1, 0.2, 0.3],
-    'subsample': [0.6, 0.8, 1.0],
-    'colsample_bytree': [0.6, 0.8, 1.0],
-    'gamma': [0, 0.1, 0.3, 0.5],
-    'reg_alpha': [0, 0.01, 0.1, 1.0],  # L1 규제
-    'reg_lambda': [0.1, 1.0, 10.0]     # L2 규제
+    "n_estimators": [100, 200, 300],
+    "max_depth": [3, 5, 7, 9],
+    "learning_rate": [0.01, 0.05, 0.1, 0.2, 0.3],
+    "subsample": [0.6, 0.8, 1.0],
+    "colsample_bytree": [0.6, 0.8, 1.0],
+    "gamma": [0, 0.1, 0.3, 0.5],
+    "reg_alpha": [0, 0.01, 0.1, 1.0],  # L1 규제
+    "reg_lambda": [0.1, 1.0, 10.0],  # L2 규제
 }
 
 features: list = [
-    'carbs', 'calories', 'protein', 'fat', 'g0', 'Age', 'BMI',
-    'Body weight ', 'Height ', 'has_diabetes', 'Gender_F', 'Gender_M'
+    "carbs",
+    "calories",
+    "protein",
+    "fat",
+    "g0",
+    "Age",
+    "BMI",
+    "Body weight ",
+    "Height ",
+    "has_diabetes",
+    "Gender_F",
+    "Gender_M",
 ]
 
 x_train, y_train = load_data(features=features)
 
 model = XGBRegressor(
-    objective='reg:squarederror',
+    objective="reg:squarederror",
     random_state=42,
     verbosity=1,
 )
@@ -49,10 +71,10 @@ model = XGBRegressor(
 search = GridSearchCV(
     model,
     param_grid=param_grid,
-    scoring='neg_mean_absolute_error',
+    scoring="neg_mean_absolute_error",
     cv=5,
     verbose=2,
-    n_jobs=-1
+    n_jobs=-1,
 )
 search.fit(x_train, y_train)
 

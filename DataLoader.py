@@ -10,14 +10,18 @@ import implicit
 # 각 환자의 추천 식품군을 뽑아주는 함수
 def create_y_target(
     val_df: pd.DataFrame,
-    key_x: str = 'patient_id',
-    key_y: str = '식품군분류',
+    key_x: str = "patient_id",
+    key_y: str = "식품군분류",
 ):
 
-    val_df = val_df.groupby(
-        [key_x, key_y],
-        observed=False,
-    ).size().unstack(fill_value=0)
+    val_df = (
+        val_df.groupby(
+            [key_x, key_y],
+            observed=False,
+        )
+        .size()
+        .unstack(fill_value=0)
+    )
 
     recommendations = {}
     for idx, value in enumerate(val_df.index):
@@ -28,16 +32,14 @@ def create_y_target(
 
 
 # 실제 성능 확인을 위해 train, valudation 데이터를 나누는 함수
-def split_train_val(
-    df: pd.DataFrame,
-    val_ids: np.ndarray
-):
+def split_train_val(df: pd.DataFrame, val_ids: np.ndarray):
 
     # 선택된 환자들을 valid set, 나머지를 train set로 할당
-    val_df = df[df['patient_id'].isin(val_ids)].copy()
-    train_df = df[~df['patient_id'].isin(val_ids)].copy()
+    val_df = df[df["patient_id"].isin(val_ids)].copy()
+    train_df = df[~df["patient_id"].isin(val_ids)].copy()
 
     return train_df, val_df
+
 
 # EVERY COLUMN NAMES
 # patient_id, meal_time, meal_type, carbs, protein, fat, fiber
@@ -50,12 +52,12 @@ def select_similar_features(
     keys: list,
 ):
 
-    new_df = df[['patient_id'] + keys].copy()
+    new_df = df[["patient_id"] + keys].copy()
 
     # One hot all categorical columns
-    categorical_cols = new_df.select_dtypes(include=['object', 'category']).columns
+    categorical_cols = new_df.select_dtypes(include=["object", "category"]).columns
     new_df = pd.get_dummies(new_df, columns=categorical_cols, dtype=float)
-    new_df = new_df.groupby('patient_id', observed=False).mean()
+    new_df = new_df.groupby("patient_id", observed=False).mean()
 
     return new_df
 
@@ -71,18 +73,20 @@ def binning(
         statistic = df[key].describe()
 
         # 25%, 50%, 75% quartiles
-        q1 = statistic['25%']
-        q2 = statistic['50%']
-        q3 = statistic['75%']
+        q1 = statistic["25%"]
+        q2 = statistic["50%"]
+        q3 = statistic["75%"]
 
-        consumption_class = [f'<{q1}', f'{q1}~{q2}', f'{q2}~{q3}', f'>{q3}']    
+        consumption_class = [f"<{q1}", f"{q1}~{q2}", f"{q2}~{q3}", f">{q3}"]
 
-        df.loc[df[key] < q1, f'{key}_consumption'] = consumption_class[0]
-        df.loc[(df[key] >= q1) & (df[key] < q2), f'{key}_consumption'] = \
+        df.loc[df[key] < q1, f"{key}_consumption"] = consumption_class[0]
+        df.loc[(df[key] >= q1) & (df[key] < q2), f"{key}_consumption"] = (
             consumption_class[1]
-        df.loc[(df[key] >= q2) & (df[key] < q3), f'{key}_consumption'] = \
+        )
+        df.loc[(df[key] >= q2) & (df[key] < q3), f"{key}_consumption"] = (
             consumption_class[2]
-        df.loc[df[key] >= q3, f'{key}_consumption'] = consumption_class[3]
+        )
+        df.loc[df[key] >= q3, f"{key}_consumption"] = consumption_class[3]
 
     return df
 
@@ -91,11 +95,12 @@ def binning(
 def load_data():
 
     meal_df = pd.read_csv("./dataset/evaluated_meals.csv")
-    patient_df = pd.read_csv("./dataset/total_metrics.csv")  # patient information for similarity
+    patient_df = pd.read_csv(
+        "./dataset/total_metrics.csv"
+    )  # patient information for similarity
 
     total_df = pd.concat(
-        [meal_df, patient_df[patient_df.columns.difference(meal_df.columns)]],
-        axis=1
+        [meal_df, patient_df[patient_df.columns.difference(meal_df.columns)]], axis=1
     )
 
     return total_df

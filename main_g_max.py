@@ -11,6 +11,7 @@ from sklearn.pipeline import make_pipeline
 
 from model import save_model
 
+
 # 학습 데이터 불러오기
 def load_data():
 
@@ -19,10 +20,21 @@ def load_data():
 
     return x_train, y_train
 
+
 x_train, y_train = load_data()
 
 # Grid Search로 찾은 최적의 파라미터
-best_params = {'colsample_bytree': 0.7, 'gamma': 0, 'learning_rate': 0.01, 'max_depth': 10, 'min_child_weight': 1, 'n_estimators': 200, 'reg_alpha': 0.1, 'reg_lambda': 2.0, 'subsample': 0.8}
+best_params = {
+    "colsample_bytree": 0.7,
+    "gamma": 0,
+    "learning_rate": 0.01,
+    "max_depth": 10,
+    "min_child_weight": 1,
+    "n_estimators": 200,
+    "reg_alpha": 0.1,
+    "reg_lambda": 2.0,
+    "subsample": 0.8,
+}
 
 # 모델 불러오기
 model = XGBRegressor(**best_params)
@@ -35,7 +47,7 @@ save_model(
 )
 
 # K-fold cross validation으로 검증
-'''
+"""
 # K-fold cross validation
 kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -43,4 +55,4 @@ scores = cross_val_score(model, x_train, y_train, cv=kf, scoring='neg_mean_absol
 
 print("개별 Fold 성능:", scores)
 print("평균 성능 (MAE):", np.mean(scores))
-'''
+"""

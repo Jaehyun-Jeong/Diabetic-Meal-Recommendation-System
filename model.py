@@ -15,7 +15,16 @@ from DataLoader import select_similar_features
 from preprocess import Normalizer, idx_to_category
 
 
-FOOD_CATEGORIES = ['과일군', '곡류군', '혼합식품', '어육류군', '우유군', '채소군', '지방군']
+FOOD_CATEGORIES = [
+    "과일군",
+    "곡류군",
+    "혼합식품",
+    "어육류군",
+    "우유군",
+    "채소군",
+    "지방군",
+]
+
 
 # Random Search Result
 # {'regularization': 100.0, 'neg_prop': 100, 'learning_rate': 0.001, 'iterations': 250, 'factors': 50}
@@ -43,7 +52,7 @@ class LMF(BaseEstimator):  # Logistic Matrix Factorization
             learning_rate=self.learning_rate,
             regularization=self.regularization,
             iterations=self.iterations,
-            neg_prop=self.neg_prop
+            neg_prop=self.neg_prop,
         )
         self.model.fit(X)  # transpose: shape [items, users]
         return self
@@ -59,9 +68,12 @@ class LMF(BaseEstimator):  # Logistic Matrix Factorization
             scores = model.model.user_factors[user] @ model.model.item_factors.T
             recommendations[user] = np.argsort(-scores)
 
-        recommendations = pd.DataFrame(recommendations, columns=['patient_id', 'food_id'])
+        recommendations = pd.DataFrame(
+            recommendations, columns=["patient_id", "food_id"]
+        )
 
         return recommendations
+
 
 # Recall@k 정의
 def recall_at_k(model, X, k=3):
@@ -79,12 +91,13 @@ def recall_at_k(model, X, k=3):
         recalls.append(len(hits) / len(true_items))
     return np.mean(recalls)
 
+
 def recall_scorer(estimator, X_val):
     return recall_at_k(estimator, X_val, k=3)
 
 
 # BM25와 cos similarity를 합친 클래스
-class BM25CosSim():
+class BM25CosSim:
 
     # B: [0, 1]. increase around 0.1, optimal [0.3, 0.9]
     # K1 [0, 3], increase around 0.1 to 0.2, optimal [0.5, 2.0]
@@ -93,9 +106,9 @@ class BM25CosSim():
         self,
         K1: float = 3.95,
         B: float = 0.2,
-        sim_features: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
-        key_x: str = 'patient_id',
-        key_y: str = '식품군분류',
+        sim_features: List[str] = ["Age", "Gender", "BMI", "Body weight ", "Height "],
+        key_x: str = "patient_id",
+        key_y: str = "식품군분류",
         normalize: bool = True,
     ):
 
@@ -103,7 +116,7 @@ class BM25CosSim():
         self.base_df = None
         self.K1 = K1
         self.B = B
-        self.sim_features= sim_features
+        self.sim_features = sim_features
         self.key_x = key_x
         self.key_y = key_y
         self.normalize = normalize
@@ -113,32 +126,42 @@ class BM25CosSim():
         train_df: pd.DataFrame,
     ):
 
-        mat = train_df.groupby(
-            [self.key_x, self.key_y],
-            observed=False,
-        ).size().unstack(fill_value=0)
+        mat = (
+            train_df.groupby(
+                [self.key_x, self.key_y],
+                observed=False,
+            )
+            .size()
+            .unstack(fill_value=0)
+        )
         mat = bm25_weight(
             mat,
             K1=self.K1,
             B=self.B,
         )
         mat = pd.DataFrame.sparse.from_spmatrix(mat)
-        mat.index = train_df.groupby(
-            [self.key_x, self.key_y],
-            observed=False,
-        ).size().unstack(fill_value=0).index
-        mat.columns = train_df.groupby(
-            [self.key_x, self.key_y],
-            observed=False,
-        ).size().unstack(fill_value=0).columns
+        mat.index = (
+            train_df.groupby(
+                [self.key_x, self.key_y],
+                observed=False,
+            )
+            .size()
+            .unstack(fill_value=0)
+            .index
+        )
+        mat.columns = (
+            train_df.groupby(
+                [self.key_x, self.key_y],
+                observed=False,
+            )
+            .size()
+            .unstack(fill_value=0)
+            .columns
+        )
 
         return mat
 
-    def fit(
-        self,
-        train_df: pd.DataFrame,  # Matrix for BM25
-        y=None
-    ):
+    def fit(self, train_df: pd.DataFrame, y=None):  # Matrix for BM25
 
         self.bm25_weight = self.__bm25_weight(train_df)
 
@@ -186,7 +209,6 @@ class BM25CosSim():
 
         return converted_df
 
-
     @staticmethod
     def recall_at_K(
         y_pred: dict,
@@ -214,9 +236,9 @@ class BM25CosSimLMF(BaseEstimator):
         self,
         K1: float = 3.95,
         B: float = 0.2,
-        sim_features: List[str] = ['Age', 'Gender', 'BMI', 'Body weight ', 'Height '],
-        key_x: str = 'patient_id',
-        key_y: str = '식품군분류',
+        sim_features: List[str] = ["Age", "Gender", "BMI", "Body weight ", "Height "],
+        key_x: str = "patient_id",
+        key_y: str = "식품군분류",
         normalize: bool = True,
         factors: int = 20,
         learning_rate: float = 1.0,
@@ -261,36 +283,31 @@ class BM25CosSimLMF(BaseEstimator):
 
         self.model_BM25CosSim.predict(X)
 
+
 # 모델, normalizer를 저장
 def save_model_normalizer(path: str, model, normalizer):
-    with open(path, 'wb') as file:
-        joblib.dump(
-            {'model': model, 'normalizer': normalizer},
-            file
-        )
+    with open(path, "wb") as file:
+        joblib.dump({"model": model, "normalizer": normalizer}, file)
 
 
 # 모델, normalizer를 로드
 def load_model_normalizer(path: str):
-    with open(path, 'rb') as file:
+    with open(path, "rb") as file:
         data = joblib.load(file)
-    model = data['model']
-    normalizer = data['normalizer']
+    model = data["model"]
+    normalizer = data["normalizer"]
     return model, normalizer
 
 
 # 모델을 저장
 def save_model(path: str, model):
-    with open(path, 'wb') as file:
-        joblib.dump(
-            model,
-            file
-        )
+    with open(path, "wb") as file:
+        joblib.dump(model, file)
 
 
 # 모델을 로드
 def load_model(path: str):
-    with open(path, 'rb') as file:
+    with open(path, "rb") as file:
         data = joblib.load(file)
     model = data
     return model
